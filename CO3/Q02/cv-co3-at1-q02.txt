@@ -1,0 +1,184 @@
+import cv2
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ==========================================================
+# 17. NOISE REMOVAL COMPARISON
+# ==========================================================
+
+# ----------------------------------------------------------
+# STEP 1: Read the original image
+# ----------------------------------------------------------
+
+image = cv2.imread("2input.jpg")
+
+if image is None:
+    print("Error: input.jpg not found!")
+    print("Place your image in the same folder as this Python file.")
+    exit()
+
+# Convert BGR to RGB for displaying with Matplotlib
+image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
+
+# ----------------------------------------------------------
+# STEP 2: Convert image to grayscale
+# ----------------------------------------------------------
+
+gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+
+# ----------------------------------------------------------
+# STEP 3: Add Gaussian noise
+# ----------------------------------------------------------
+
+# Generate Gaussian noise
+mean = 0
+sigma = 25
+
+noise = np.random.normal(mean, sigma, gray.shape)
+
+# Add noise to image
+noisy_image = gray.astype(np.float32) + noise
+
+# Keep pixel values between 0 and 255
+noisy_image = np.clip(noisy_image, 0, 255).astype(np.uint8)
+
+
+# ----------------------------------------------------------
+# STEP 4: Apply different noise removal filters
+# ----------------------------------------------------------
+
+# 1. Mean / Average Filter
+mean_filter = cv2.blur(noisy_image, (5, 5))
+
+# 2. Median Filter
+median_filter = cv2.medianBlur(noisy_image, 5)
+
+# 3. Gaussian Filter
+gaussian_filter = cv2.GaussianBlur(
+    noisy_image,
+    (5, 5),
+    1
+)
+
+# 4. Bilateral Filter
+bilateral_filter = cv2.bilateralFilter(
+    noisy_image,
+    9,
+    75,
+    75
+)
+
+
+# ----------------------------------------------------------
+# STEP 5: Display all results
+# ----------------------------------------------------------
+
+plt.figure(figsize=(15, 10))
+
+# Original image
+plt.subplot(2, 3, 1)
+plt.imshow(gray, cmap="gray")
+plt.title("1. Original Image")
+plt.axis("off")
+
+# Noisy image
+plt.subplot(2, 3, 2)
+plt.imshow(noisy_image, cmap="gray")
+plt.title("2. Noisy Image")
+plt.axis("off")
+
+# Mean filter
+plt.subplot(2, 3, 3)
+plt.imshow(mean_filter, cmap="gray")
+plt.title("3. Mean Filter (5x5)")
+plt.axis("off")
+
+# Median filter
+plt.subplot(2, 3, 4)
+plt.imshow(median_filter, cmap="gray")
+plt.title("4. Median Filter (5x5)")
+plt.axis("off")
+
+# Gaussian filter
+plt.subplot(2, 3, 5)
+plt.imshow(gaussian_filter, cmap="gray")
+plt.title("5. Gaussian Filter (5x5)")
+plt.axis("off")
+
+# Bilateral filter
+plt.subplot(2, 3, 6)
+plt.imshow(bilateral_filter, cmap="gray")
+plt.title("6. Bilateral Filter")
+plt.axis("off")
+
+plt.tight_layout()
+plt.show()
+
+
+# ----------------------------------------------------------
+# STEP 6: Save the output images
+# ----------------------------------------------------------
+
+cv2.imwrite("original.jpg", gray)
+cv2.imwrite("noisy_image.jpg", noisy_image)
+cv2.imwrite("mean_filter.jpg", mean_filter)
+cv2.imwrite("median_filter.jpg", median_filter)
+cv2.imwrite("gaussian_filter.jpg", gaussian_filter)
+cv2.imwrite("bilateral_filter.jpg", bilateral_filter)
+
+print("\nOutput images saved successfully!")
+
+
+# ----------------------------------------------------------
+# STEP 7: Print comparison
+# ----------------------------------------------------------
+
+print("\n==============================================")
+print("       NOISE REMOVAL COMPARISON")
+print("==============================================")
+
+print("\n1. Mean Filter")
+print("   - Removes noise by averaging neighboring pixels")
+print("   - Smooths the image")
+print("   - Can blur edges")
+
+print("\n2. Median Filter")
+print("   - Replaces pixels using the median value")
+print("   - Effective for impulse / salt-and-pepper noise")
+print("   - Preserves edges better than mean filtering")
+
+print("\n3. Gaussian Filter")
+print("   - Uses weighted averaging")
+print("   - Smooths Gaussian noise effectively")
+print("   - May blur fine details")
+
+print("\n4. Bilateral Filter")
+print("   - Considers both pixel distance and intensity difference")
+print("   - Removes noise while preserving edges")
+print("   - Usually gives the best detail preservation")
+
+
+# ----------------------------------------------------------
+# STEP 8: Optional quantitative comparison
+# ----------------------------------------------------------
+
+# Calculate Mean Squared Error (MSE)
+def calculate_mse(original, filtered):
+    original = original.astype(np.float32)
+    filtered = filtered.astype(np.float32)
+
+    mse = np.mean((original - filtered) ** 2)
+
+    return mse
+
+
+print("\n==============================================")
+print("              MSE COMPARISON")
+print("==============================================")
+
+print("Mean Filter MSE     :", round(calculate_mse(gray, mean_filter), 2))
+print("Median Filter MSE   :", round(calculate_mse(gray, median_filter), 2))
+print("Gaussian Filter MSE :", round(calculate_mse(gray, gaussian_filter), 2))
+print("Bilateral Filter MSE:", round(calculate_mse(gray, bilateral_filter), 2))
